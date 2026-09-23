@@ -7,7 +7,9 @@ authors = [
     { name = "ra1mo", email = "rawan.mourtada@claims-express.net" }
 ]
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "dvc>=3.67.1",
+]
 
 [project.scripts]
 mlops-lab-1 = "mlops_lab_1:main"
