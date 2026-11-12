@@ -1,13 +1,13 @@
 import argparse
 from pathlib import Path
 
-import mlflow
 import mlflow.pytorch
 import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader
 from torchvision import datasets, models, transforms
 
+import mlflow
 
 ROOT = Path(__file__).resolve().parents[2]
 
