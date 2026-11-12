@@ -1,6 +1,7 @@
-from pathlib import Path
-from PIL import Image
 import shutil
+from pathlib import Path
+
+from PIL import Image
 
 # --------------------------------------------------
 # CONFIG
@@ -12,29 +13,50 @@ RAW_DIR = ROOT / "data" / "food11_raw"
 PROCESSED_DIR = ROOT / "data" / "food11_processed"
 MINI_DIR = ROOT / "data" / "food11_processed_mini"
 
-IMAGE_SIZE = (128, 128)
+IMAGE_SIZE = 128
 MINI_LIMIT = 100
 
+CLASSES = [
+    "Bread",
+    "Dairy product",
+    "Dessert",
+    "Egg",
+    "Fried food",
+    "Meat",
+    "Noodles-Pasta",
+    "Rice",
+    "Seafood",
+    "Soup",
+    "Vegetable-Fruit",
+]
+
 CLASS_NAMES = {
-    "0": "Bread",
-    "1": "Dairy product",
-    "2": "Dessert",
-    "3": "Egg",
-    "4": "Fried food",
-    "5": "Meat",
-    "6": "Noodles-Pasta",
-    "7": "Rice",
-    "8": "Seafood",
-    "9": "Soup",
-    "10": "Vegetable-Fruit",
+    str(i): name
+    for i, name in enumerate(CLASSES)
 }
 
 SPLITS = ["training", "evaluation", "validation"]
 
-
 # --------------------------------------------------
 # HELPERS
 # --------------------------------------------------
+
+
+def category_from_filename(filename: str) -> str:
+    class_id = int(filename.split("_")[0])
+
+    if class_id < 0 or class_id >= len(CLASSES):
+        raise ValueError(f"Unknown class ID {class_id} in {filename}")
+
+    return CLASSES[class_id]
+
+
+def resize_image(
+    img: Image.Image,
+    size: int = IMAGE_SIZE,
+) -> Image.Image:
+    return img.convert("RGB").resize((size, size))
+
 
 def get_class_name(filename: str) -> str:
     """
@@ -56,11 +78,10 @@ def process_image(src: Path, dst: Path):
 
     try:
         with Image.open(src) as img:
-            img = img.convert("RGB")
-            img = img.resize(IMAGE_SIZE)
+            img = resize_image(img)
             img.save(dst, quality=90)
 
-    except Exception as e:
+    except (OSError, ValueError) as e:
         print(f"Skipping {src}: {e}")
 
 
@@ -90,7 +111,7 @@ def create_processed_dataset():
         print(f"{split}: {len(files)} images")
 
         for i, src in enumerate(files, start=1):
-            class_name = get_class_name(src.name)
+            class_name = category_from_filename(src.name)
 
             dst = (
                 PROCESSED_DIR

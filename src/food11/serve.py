@@ -1,12 +1,14 @@
 import os
 from io import BytesIO
+from typing import Annotated
 
-import mlflow
 import mlflow.pyfunc
 import torch
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from PIL import Image
 from torchvision import transforms
+
+import mlflow
 
 MLFLOW_TRACKING_URI = os.getenv(
     "MLFLOW_TRACKING_URI",
@@ -34,7 +36,17 @@ CLASS_NAMES = [
 
 app = FastAPI(title="Food-11 API")
 
-model = mlflow.pyfunc.load_model(MODEL_URI)
+model = None
+
+
+@app.on_event("startup")
+def load_model():
+    global model
+
+    if os.environ.get("SKIP_MODEL"):
+        return
+
+    model = mlflow.pyfunc.load_model(MODEL_URI)
 
 
 transform = transforms.Compose([
@@ -53,7 +65,14 @@ def health():
 
 
 @app.post("/predict")
-async def predict(file: UploadFile = File(...)):
+async def predict(
+    file: Annotated[UploadFile, File(...)],
+):
+    if model is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Model is not loaded",
+        )
     contents = await file.read()
 
     image = Image.open(BytesIO(contents)).convert("RGB")
