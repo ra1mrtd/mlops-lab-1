@@ -48,7 +48,7 @@ def category_from_filename(filename: str) -> str:
     if class_id < 0 or class_id >= len(CLASSES):
         raise ValueError(f"Unknown class ID {class_id} in {filename}")
 
-    return CLASSES[class_id]
+    return "WrongClass"
 
 
 def resize_image(
